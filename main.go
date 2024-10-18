@@ -96,7 +96,7 @@ func handleConnections(connChan chan net.Conn) {
 	// just slices and maps, channels in go are also iterable,
 	// and they will iterate till the channel is closed
 	for conn := range connChan {
-		go handleConnection_v5(conn)
+		go handleConnection_v1(conn)
 	}
 }
 
@@ -198,7 +198,7 @@ func handleConnection_v2(conn net.Conn) {
 func handleConnection_v3(conn net.Conn) {
 	// what magical are we going to do here?
 
-	// we are trying to implement a HTTP/1.0 protocol here,
+	// we are trying to implement an HTTP/1.1 protocol here,
 	// and RFC states that server should close the connection after server sends response back to the client
 	// but as you see if we close the connection from server side, client cries with EOF
 	// lucky us, EOF can be handled the way we want.
@@ -249,7 +249,7 @@ func handleConnection_v3(conn net.Conn) {
 }
 
 func handleConnection_v4(conn net.Conn) {
-	// lets try to write the proper response this time
+	// let's try to write the proper response this time,
 	// but we still have a dumb version of reading the data which is fine for now
 	completeData := make([]byte, 0, 1<<10)
 
@@ -279,13 +279,13 @@ func handleConnection_v4(conn net.Conn) {
 
 	dataToWrite := []byte("Gopher!!")
 
-	buffer.Write([]byte("HTTP/1.1 200 OK"))              // protocol and status don
-	buffer.Write([]byte("\r\n"))                         // CRLF
-	buffer.Write([]byte("Content-Length: "))             // header for content length
-	buffer.Write([]byte(strconv.Itoa(len(dataToWrite)))) // actual length of the data
-	buffer.Write([]byte("\r\n"))                         // CRLF
-	buffer.Write([]byte("\r\n"))                         // empty line for data
-	buffer.Write(dataToWrite)                            // actual data
+	buffer.WriteString("HTTP/1.1 200 OK")              // protocol and status don
+	buffer.WriteString("\r\n")                         // CRLF
+	buffer.WriteString("Content-Length: ")             // header for content length
+	buffer.WriteString(strconv.Itoa(len(dataToWrite))) // actual length of the data
+	buffer.WriteString("\r\n")                         // CRLF
+	buffer.WriteString("\r\n")                         // empty line for data
+	buffer.Write(dataToWrite)                          // actual data
 
 	// write the buffer we created on the connection
 	_, err := conn.Write(buffer.Bytes())
